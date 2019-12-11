@@ -1,7 +1,13 @@
 import io.hexlabs.kloudformation.module.s3.s3Website
 import io.kloudformation.KloudFormation
 import io.kloudformation.StackBuilder
+import io.kloudformation.model.iam.IamPolicyVersion
+import io.kloudformation.model.iam.action
+import io.kloudformation.model.iam.policyDocument
+import io.kloudformation.model.iam.resources
+import io.kloudformation.property.aws.iam.user.Policy
 import io.kloudformation.resource.aws.iam.user
+import io.kloudformation.unaryPlus
 
 class BucketStack: StackBuilder {
     override fun KloudFormation.create(args: List<String>) {
@@ -17,9 +23,27 @@ class BucketStack: StackBuilder {
     }
 }
 
-
 class IamStack: StackBuilder {
     override fun KloudFormation.create(args: List<String>) {
-        user()
+        user{
+            userName(parameter<String>("PolicyName", default = "KloudsUser").ref())
+            managedPolicyArns(listOf(+"arn:aws:iam::aws:policy/SecurityAudit"))
+            policies(listOf(Policy(
+                policyName = +"APIGatewayGETDomainNamePolicy",
+                policyDocument = policyDocument(
+                    version = IamPolicyVersion.V2.version
+                ) {
+                    statement(
+                        action = action("apigateway:GET"),
+                        resource = resources(
+                            "arn:aws:apigateway:*::/domainnames",
+                            "arn:aws:apigateway:*::/domainnames/*",
+                            "arn:aws:apigateway:*::/domainnames/*/basepathmappings",
+                            "arn:aws:apigateway:*::/domainnames/*/basepathmappings/*"
+                        )
+                    )
+                }
+            )))
+        }
     }
 }
