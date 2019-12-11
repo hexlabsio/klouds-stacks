@@ -17,25 +17,25 @@ jobs:
   master:
     machine:
       enabled: true
-  steps:
-    - checkout
+    steps:
+      - checkout
 
-    - run:
-      name: Install KloudFormation
-      command: curl -sSL install.kloudformation.hexlabs.io | bash -s -- -local
+      - run:
+        name: Install KloudFormation
+        command: curl -sSL install.kloudformation.hexlabs.io | bash -s -- -local
 
-    - restore_cache:
-        keys:
-          - kloudformation-{{ checksum "kloudformation.sh" }}
+      - restore_cache:
+          keys:
+            - kloudformation-{{ checksum "kloudformation.sh" }}
 
-    - run:
-        name: Deploy Stack
-        command:  ./kloudformation.sh -m s3@1.0.11 -v 1.1.76 deploy -stack-name klouds-user-template -stack-class BucketStack -template bucket-stack.yml -output output.properties
+      - run:
+          name: Deploy Stack
+          command:  ./kloudformation.sh -m s3@1.0.11 -v 1.1.76 deploy -stack-name klouds-user-template -stack-class BucketStack -template bucket-stack.yml -output output.properties
 
-    - run:
-        name: Transpile Stack
-        command:  ./kloudformation.sh upload -stack-class IamStack
+      - run:
+          name: Transpile Stack
+          command:  ./kloudformation.sh upload -stack-class IamStack
 
-    - run:
-        name: Upload Template
-        command:  ./kloudformation.sh upload -location template.yml -bucket klouds-user-template -key template.yml
+      - run:
+          name: Upload Template
+          command:  ./kloudformation.sh upload -location template.yml -bucket klouds-user-template -key template.yml
