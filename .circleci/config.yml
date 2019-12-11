@@ -21,12 +21,12 @@ jobs:
       - checkout
 
       - run:
-        name: Install KloudFormation
-        command: curl -sSL install.kloudformation.hexlabs.io | bash -s -- -local
+          name: Install KloudFormation
+          command: curl -sSL install.kloudformation.hexlabs.io | bash -s -- -local
 
-      - restore_cache:
-          keys:
-            - kloudformation-{{ checksum "kloudformation.sh" }}
+#      - restore_cache:
+#          keys:
+#            - kloudformation-{{ checksum "kloudformation.sh" }}
 
       - run:
           name: Deploy Stack
