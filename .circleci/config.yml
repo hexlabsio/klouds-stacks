@@ -30,11 +30,11 @@ jobs:
 
       - run:
           name: Deploy Bucket Stack
-          command:  ./kloudformation.sh -m s3@1.0.11 -v 1.1.76 deploy -stack-name klouds-user-template -stack-class BucketStack -template bucket-stack.yml -output output.properties
+          command:  ./kloudformation.sh -m s3@1.0.11 -v 1.1.136 deploy -stack-name klouds-user-template -stack-class BucketStack -template bucket-stack.yml -output output.properties
 
       - run:
           name: Deploy and Transpile IAM User Stack
-          command:  ./kloudformation.sh -m s3@1.0.11 -v 1.1.76 deploy -stack-class IamStack -stack-name klouds-user -template user-template.yml
+          command:  ./kloudformation.sh -m s3@1.0.11 -v 1.1.136 deploy -stack-class IamStack -stack-name klouds-user -template user-template.yml
 
       - run:
           name: Upload Template

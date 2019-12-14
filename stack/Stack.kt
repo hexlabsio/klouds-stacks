@@ -25,6 +25,7 @@ class BucketStack: StackBuilder {
 
 class IamStack: StackBuilder {
     override fun KloudFormation.create(args: List<String>) {
+        this.description = "This Stack will create an IAM user with read access to AWS services across your account"
         user{
             userName(parameter<String>("PolicyName", default = "KloudsUser").ref())
             managedPolicyArns(listOf(+"arn:aws:iam::aws:policy/SecurityAudit"))
