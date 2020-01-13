@@ -1,0 +1,36 @@
+name: Build
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2.0.0
+
+      - name: Install KloudFormation
+        run: curl -sSL install.kloudformation.hexlabs.io | bash -s -- -local
+
+      - name: Deploy Bucket Stack
+        run: ./kloudformation.sh -m s3@1.1.12 -v 1.1.166 deploy -stack-name klouds-user-template -stack-class BucketStack -template bucket-stack.yml
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Deploy Template Stack
+        run: ./kloudformation.sh -m s3@1.1.12 -v 1.1.166 deploy -stack-class IamStack -stack-name klouds-user -template user-template.yml
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Upload Stack to Bucket
+        run: ./kloudformation.sh upload -location user-template.yml -bucket klouds-user-template -key template.yml
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: URL
+        run: echo https://console.aws.amazon.com/cloudformation/home#/stacks/create/review?templateURL=https://klouds-user-template.s3-eu-west-1.amazonaws.com/template.yml&stackName=klouds-user

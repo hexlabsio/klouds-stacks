@@ -1,7 +1,6 @@
 import io.hexlabs.kloudformation.module.s3.s3Website
 import io.kloudformation.KloudFormation
 import io.kloudformation.StackBuilder
-import io.kloudformation.model.iam.IamPolicyVersion
 import io.kloudformation.model.iam.action
 import io.kloudformation.model.iam.policyDocument
 import io.kloudformation.model.iam.resources
@@ -26,14 +25,13 @@ class BucketStack: StackBuilder {
 class IamStack: StackBuilder {
     override fun KloudFormation.create(args: List<String>) {
         this.description = "This Stack will create an IAM user with read access to AWS services across your account"
+        val userName = parameter<String>("UserName", default = "klouds-user").ref()
         user{
-            userName(parameter<String>("PolicyName", default = "KloudsUser").ref())
+            userName(userName)
             managedPolicyArns(listOf(+"arn:aws:iam::aws:policy/SecurityAudit"))
             policies(listOf(Policy(
                 policyName = +"APIGatewayGETDomainNamePolicy",
-                policyDocument = policyDocument(
-                    version = IamPolicyVersion.V2.version
-                ) {
+                policyDocument = policyDocument {
                     statement(
                         action = action("apigateway:GET"),
                         resource = resources(
