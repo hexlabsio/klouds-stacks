@@ -72,14 +72,12 @@ class BillingBucketStack: StackBuilder {
         }
         bucketPolicy(bucket.Arn(), policyDocument {
             statement(
-                    sid = "Klouds Access to Bucket",
                     action = actions("s3:GetBucketLocation", "s3:ListBucket"),
                     resource = resource(bucket.Arn())
             ) {
                 principal(PrincipalType.AWS, listOf(+"arn:aws:iam::" + kloudsAccount.ref() + ":root"))
             }
             statement(
-                    sid = "Klouds Access to Bucket Contents",
                     action = action("s3:GetObject"),
                     resource = resource(bucket.Arn() + "/*")
             ) {

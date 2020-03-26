@@ -1,2 +1,2 @@
-# klouds-iam-user
-Stack template deployed to S3 for use as a stack template
+# klouds-stacks
+Stack templates deployed to S3 for use by users of klouds.io
