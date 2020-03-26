@@ -71,10 +71,31 @@ class BillingBucketStack: StackBuilder {
         bucketPolicy(bucket.ref(), policyDocument {
             statement(
                     sid = "KloudsAccessToBucket",
-                    action = actions("s3:GetBucketLocation", "s3:ListBucket", "s3:GetObject"),
-                    resource = resources(bucket.Arn(), bucket.Arn() + "/*")
+                    action = actions("s3:GetBucketLocation", "s3:ListBucket"),
+                    resource = resource(bucket.Arn())
             ) {
                 principal(PrincipalType.AWS, listOf(+"arn:aws:iam::" + kloudsAccount.ref() + ":root"))
+            }
+            statement(
+                    sid = "KloudsObjectAccess",
+                    action = action("s3:GetObject"),
+                    resource = resources(bucket.Arn() + "/*")
+            ) {
+                principal(PrincipalType.AWS, listOf(+"arn:aws:iam::" + kloudsAccount.ref() + ":root"))
+            }
+            statement(
+                    sid = "BillingReportBucketAccess",
+                    action = actions("s3:GetBucketAcl", "s3:GetBucketPolicy"),
+                    resource = resource(bucket.Arn())
+            ) {
+                principal(PrincipalType.SERVICE, listOf(+"billingreports.amazonaws.com"))
+            }
+            statement(
+                    sid = "BillingReportObjectAccess",
+                    action = actions("s3:PutObject"),
+                    resource = resource(bucket.Arn() + "/*")
+            ) {
+                principal(PrincipalType.SERVICE, listOf(+"billingreports.amazonaws.com"))
             }
         })
     }
