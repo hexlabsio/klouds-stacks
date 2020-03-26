@@ -26,11 +26,26 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
+      - name: Deploy Billing Bucket Stack
+        run: ./kloudformation.sh -m s3@1.1.12 -v 1.1.166 deploy -stack-class BillingBucketStack -stack-name klouds-billing-bucket -template billing-template.yml
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
       - name: Upload Stack to Bucket
         run: ./kloudformation.sh upload -location user-template.yml -bucket klouds-user-template -key template.yml
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-      - name: URL
+      - name: Upload Stack to Bucket
+        run: ./kloudformation.sh upload -location billing-template.yml -bucket klouds-billing-bucket-template -key template.yml
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: IAM User URL
         run: echo https://console.aws.amazon.com/cloudformation/home#/stacks/create/review?templateURL=https://klouds-user-template.s3-eu-west-1.amazonaws.com/template.yml&stackName=klouds-user
+
+      - name: Billing Bucket URL
+        run: echo https://console.aws.amazon.com/cloudformation/home#/stacks/create/review?templateURL=https://klouds-billing-bucket-template.s3-eu-west-1.amazonaws.com/template.yml&stackName=klouds-billing-bucket
