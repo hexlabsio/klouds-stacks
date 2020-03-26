@@ -68,7 +68,7 @@ class BillingBucketStack: StackBuilder {
         val bucketName = parameter<String>("BucketName", default = "klouds-billing-reports").ref()
         val kloudsAccount = parameter<String>("KloudsAccount", default = "662158168835")
         val bucket = bucket { bucketName(bucketName) }
-        bucketPolicy(bucket.Arn(), policyDocument {
+        bucketPolicy(bucket.ref(), policyDocument {
             statement(
                     sid = "KloudsAccessToBucket",
                     action = actions("s3:GetBucketLocation", "s3:ListBucket", "s3:GetObject"),
