@@ -3,7 +3,6 @@ name: Pipeline
 on: ['push']
 jobs:
   deploy:
-    needs: build
     runs-on: ubuntu-latest
     strategy:
       matrix:
