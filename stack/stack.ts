@@ -29,4 +29,4 @@ Template.createWithParams({
       }
     }]
   })
-}, 'template.json');
+}, 'template/template.json');
