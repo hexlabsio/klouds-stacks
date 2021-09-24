@@ -29,4 +29,4 @@ Template.createWithParams({
       }
     }]
   })
-}, 'template/template.json');
+}, 'template/template.json', t => JSON.stringify(({...t, Description: 'An IAM User to grant READONLY access to resources in your account to klouds.io'})));

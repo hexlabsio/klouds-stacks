@@ -12,7 +12,7 @@
   },
   "author": "hexlabs",
   "devDependencies": {
-    "@hexlabs/kloudformation-ts": "^1.1.163",
+    "@hexlabs/kloudformation-ts": "^1.1.174",
     "@types/node": "^15.0.2",
     "eslint": "^6.7.2",
     "eslint-plugin-jest": "^23.1.1",
