@@ -1,4 +1,5 @@
 import {Template} from "@hexlabs/kloudformation-ts";
+import {Value} from "@hexlabs/kloudformation-ts/dist/kloudformation/Value";
 
 Template.create(aws => {
   aws.s3Bucket({
@@ -10,11 +11,23 @@ Template.create(aws => {
   })
 }, 'bucket.json');
 
+export interface ConnectorRequest {
+  RoleArn: Value<string>;
+  UserIdentifier: Value<string>;
+}
+
 Template.createWithParams({
-  UserName: { type: 'String', default: 'klouds-user' }
+  RoleName: { type: 'String', default: 'klouds-view-connector' },
+  KloudsUserIdentifier: {type: 'String', description: 'A temporary ID used to refer back to the user that requested this in app, do not change.'},
+  ConnectorPrincipalId: { type: 'String', description: 'The principal that is allowed to assume this role, do not change.' },
+  ConnectorExternalId: { type: 'String', description: 'The external id used to match the connector when assuming this role, do not change.' },
+  ConnectorEndpoint: { type: 'String', description: 'The endpoint to send the role arn to when complete so kloud.io can assume this role, do not change.' },
 }, (aws, params) => {
-  aws.iamUser({
-    userName: params.UserName(),
+  const role = aws.iamRole({
+    roleName: params.RoleName(),
+    assumeRolePolicyDocument: {
+      statement: [{effect: 'Allow', principal: { AWS: [params.ConnectorPrincipalId()]}, action: 'sts:AssumeRole', condition: { StringEquals: { 'sts:ExternalId': params.ConnectorExternalId()}} }]
+    },
     managedPolicyArns: ['arn:aws:iam::aws:policy/SecurityAudit'],
     policies: [{
       policyName: 'APIGatewayGETDomainNamePolicy',
@@ -28,5 +41,10 @@ Template.createWithParams({
           ]}]
       }
     }]
-  })
+  });
+  aws.customResource<ConnectorRequest>('KloudsConnector', {
+    ServiceToken: params.ConnectorEndpoint(),
+    RoleArn: role.attributes.Arn,
+    UserIdentifier: params.KloudsUserIdentifier()
+  });
 }, 'template/template.json');
