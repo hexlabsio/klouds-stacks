@@ -26,7 +26,7 @@ Template.createWithParams({
   const role = aws.iamRole({
     roleName: params.RoleName(),
     assumeRolePolicyDocument: {
-      statement: [{effect: 'Allow', principal: { AWS: [params.ConnectorPrincipalId()]}, action: 'sts:AssumeRole', condition: { StringEquals: { 'sts:ExternalId': params.ConnectorExternalId()}} }]
+      statement: [{effect: 'Allow', principal: { AWS: [params.ConnectorPrincipalId()]}, action: 'sts:AssumeRole', condition: { StringEquals: { _nocaps: true, 'sts:ExternalId': params.ConnectorExternalId()}} }]
     },
     managedPolicyArns: ['arn:aws:iam::aws:policy/SecurityAudit'],
     policies: [{
