@@ -52,13 +52,13 @@ Template.createWithParams({
     zipFile: fs.readFileSync('stack/generate-cost-reports.js').toString()}, 'index.handler', 'nodejs14.x' );
   Iam.from(lambda.role)
   .add('CostReportPolicy', Policy.allow(['cur:PutReportDefinition', 'cur:DeleteReportDefinition'], '*'));
-  aws.customResource('KloudsCostReportGenerator', {
+  const generator = aws.customResource('KloudsCostReportGenerator', {
     ServiceToken: lambda.lambda.attributes.Arn,
-    Bucket: bucket,
+    Bucket: { Ref: bucket._logicalName },
     Region: { Ref: 'AWS::Region' }
   });
   aws.customResource<ConnectorRequest>('KloudsConnector', {
-    _dependsOn: [bucket],
+    _dependsOn: [bucket, generator],
     ServiceToken: params.ConnectorEndpoint(),
     RoleArn: role.attributes.Arn,
     UserIdentifier: params.KloudsUserIdentifier()
