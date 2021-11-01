@@ -1,6 +1,8 @@
 import {Template} from "@hexlabs/kloudformation-ts";
+import {Iam, Policy} from "@hexlabs/kloudformation-ts/dist/kloudformation/iam/PolicyDocument";
 import {Lambda} from "@hexlabs/kloudformation-ts/dist/kloudformation/modules/lambda";
 import {Value} from "@hexlabs/kloudformation-ts/dist/kloudformation/Value";
+import fs from 'fs';
 
 Template.create(aws => {
   aws.s3Bucket({
@@ -21,12 +23,8 @@ Template.createWithParams({
   UniqueId: {type: 'String'}
 }, (aws, params) => {
   const lambda = Lambda.create(aws, 'klouds-cost-report-generator',{
-    zipFile: `var aws = require('aws-sdk')
-          var response = require('cfn-response')
-          exports.handler = function(event, context) {
-              console.log("REQUEST RECEIVED:\\n" + JSON.stringify(event));
-              response.send(event, context, "SUCCESS", {});
-          }`}, 'index.handler', 'nodejs14.x' );
+    zipFile: fs.readFileSync('stack/generate-cost-reports.js').toString()}, 'index.handler', 'nodejs14.x' );
+  Iam.from(lambda.role).add('CostReportPolicy', Policy.allow(['cur:PutReportDefinition', 'cur:DeleteReportDefinition'], '*'));
   aws.customResource('KloudsConnector', {
     ServiceToken: lambda.lambda.attributes.Arn,
   });
