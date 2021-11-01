@@ -1,4 +1,5 @@
 import {Template} from "@hexlabs/kloudformation-ts";
+import {Lambda} from "@hexlabs/kloudformation-ts/dist/kloudformation/modules/lambda";
 import {Value} from "@hexlabs/kloudformation-ts/dist/kloudformation/Value";
 
 Template.create(aws => {
@@ -15,6 +16,21 @@ export interface ConnectorRequest {
   RoleArn: Value<string>;
   UserIdentifier: Value<string>;
 }
+
+Template.createWithParams({
+  UniqueId: {type: 'String'}
+}, (aws, params) => {
+  const lambda = Lambda.create(aws, 'klouds-cost-report-generator',{
+    zipFile: `var aws = require('aws-sdk')
+          var response = require('cfn-response')
+          exports.handler = function(event, context) {
+              console.log("REQUEST RECEIVED:\\n" + JSON.stringify(event));
+              response.send(event, context, "SUCCESS", {});
+          }`}, 'index.handler', 'nodejs' );
+  aws.customResource('KloudsConnector', {
+    ServiceToken: lambda.lambda.attributes.Arn,
+  });
+}, 'template/with-cost-reports.json', t => JSON.stringify(({...t, Description: 'An IAM Role to grant READONLY access to klouds.io'})));
 
 Template.createWithParams({
   RoleName: { type: 'String', default: 'klouds-view-connector' },
