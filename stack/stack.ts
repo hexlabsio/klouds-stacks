@@ -98,4 +98,7 @@ Template.createWithParams({
     RoleArn: role.attributes.Arn,
     UserIdentifier: params.KloudsUserIdentifier()
   });
+  return {
+    outputs: {'RoleArn': {description: 'Role Arn', value: role.attributes.Arn}}
+  }
 }, 'template/template.json', t => JSON.stringify(({...t, Description: 'An IAM Role to grant READONLY access to klouds.io'})));
