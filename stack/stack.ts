@@ -48,8 +48,9 @@ Template.createWithParams({
   });
   Iam.from(role)
     .add('CostReportPolicy', Policy.allow(['s3:ListBucket', 's3:GetObject'], bucket.attributes.Arn));
-  const lambda = Lambda.create(aws, join('klouds-cost-report-generator-', params.UniqueId()) as any,{
+  const lambda = Lambda.create(aws, 'klouds-cost-report-generator',{
     zipFile: fs.readFileSync('stack/generate-cost-reports.js').toString()}, 'index.handler', 'nodejs14.x' );
+  lambda.lambda.functionName = join('klouds-cost-report-generator-', params.UniqueId())
   Iam.from(lambda.role)
   .add('CostReportPolicy', Policy.allow(['cur:PutReportDefinition', 'cur:DeleteReportDefinition'], '*'));
   const generator = aws.customResource('KloudsCostReportGenerator', {
