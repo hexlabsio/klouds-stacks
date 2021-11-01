@@ -1,5 +1,5 @@
 import {Template} from "@hexlabs/kloudformation-ts";
-import {Iam, Policy} from "@hexlabs/kloudformation-ts/dist/kloudformation/iam/PolicyDocument";
+import {Iam, iamPolicy, Policy} from "@hexlabs/kloudformation-ts/dist/kloudformation/iam/PolicyDocument";
 import {Lambda} from "@hexlabs/kloudformation-ts/dist/kloudformation/modules/lambda";
 import {join, Value} from "@hexlabs/kloudformation-ts/dist/kloudformation/Value";
 import fs from 'fs';
@@ -27,6 +27,23 @@ Template.createWithParams({
   ConnectorEndpoint: { type: 'String', description: 'The endpoint to send the role arn to when complete so kloud.io can assume this role, do not change.' }
 }, (aws, params) => {
   const bucket = aws.s3Bucket({ bucketName: join('klouds-cost-reports-', params.UniqueId()) });
+  aws.s3BucketPolicy({
+    bucket,
+    policyDocument: iamPolicy({version: '2012-10-17', statement: [
+        {
+          effect: 'Allow',
+          principal: {Service: ['billingreports.amazonaws.com'] },
+          action: ['s3:GetBucketAcl', 's3:GetBucketPolicy'],
+          resource: bucket.attributes.Arn
+        },
+        {
+          effect: 'Allow',
+          principal: {Service: ['billingreports.amazonaws.com'] },
+          action: ['s3:PutObject', 's3:GetBucketPolicy'],
+          resource: join(bucket.attributes.Arn,'/*')
+        }
+      ]})
+  });
   const role = aws.iamRole({
     roleName: join('klouds-connector-', params.UniqueId()),
     assumeRolePolicyDocument: {
@@ -50,7 +67,7 @@ Template.createWithParams({
     .add('CostReportPolicy', Policy.allow(['s3:ListBucket', 's3:GetObject'], bucket.attributes.Arn));
   const lambda = Lambda.create(aws, 'klouds-cost-report-generator',{
     zipFile: fs.readFileSync('stack/generate-cost-reports.js').toString()}, 'index.handler', 'nodejs14.x' );
-  lambda.lambda.functionName = join('klouds-cost-report-generator-', params.UniqueId())
+  lambda.lambda.functionName = join('klouds-cost-report-generator', params.UniqueId())
   Iam.from(lambda.role)
   .add('CostReportPolicy', Policy.allow(['cur:PutReportDefinition', 'cur:DeleteReportDefinition'], '*'));
   const generator = aws.customResource('KloudsCostReportGenerator', {
