@@ -19,7 +19,7 @@ exports.handler = async function(event, context) {
                 "ReportVersioning": "OVERWRITE_REPORT"
             }
         }
-        const cur = aws.CUR();
+        const cur = new aws.CUR();
         await cur.putReportDefinition(params).promise();
         response.send(event, context, "SUCCESS", {});
     } catch(e) {
