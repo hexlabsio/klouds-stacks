@@ -26,14 +26,7 @@ Template.createWithParams({
   ConnectorExternalId: { type: 'String', description: 'The external id used to match the connector when assuming this role, do not change.' },
   ConnectorEndpoint: { type: 'String', description: 'The endpoint to send the role arn to when complete so kloud.io can assume this role, do not change.' }
 }, (aws, params) => {
-  const bucket = aws.s3Bucket({ bucketName: join('klouds-cost-reports-', params.UniqueId()),
-    publicAccessBlockConfiguration: {
-      blockPublicAcls: true,
-      blockPublicPolicy: true,
-      ignorePublicAcls: true,
-      restrictPublicBuckets: true
-    }
-  });
+  const bucket = aws.s3Bucket({ bucketName: join('klouds-cost-reports-', params.UniqueId())});
   aws.s3BucketPolicy({
     bucket,
     policyDocument: iamPolicy({version: '2012-10-17', statement: [
@@ -46,7 +39,7 @@ Template.createWithParams({
         {
           effect: 'Allow',
           principal: {Service: ['billingreports.amazonaws.com'] },
-          action: ['s3:PutObject', 's3:GetBucketPolicy'],
+          action: ['s3:PutObject'],
           resource: join(bucket.attributes.Arn,'/*')
         }
       ]})
