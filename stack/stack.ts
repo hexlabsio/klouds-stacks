@@ -26,7 +26,7 @@ Template.createWithParams({
           exports.handler = function(event, context) {
               console.log("REQUEST RECEIVED:\\n" + JSON.stringify(event));
               response.send(event, context, "SUCCESS", {});
-          }`}, 'index.handler', 'nodejs' );
+          }`}, 'index.handler', 'nodejs14.x' );
   aws.customResource('KloudsConnector', {
     ServiceToken: lambda.lambda.attributes.Arn,
   });
