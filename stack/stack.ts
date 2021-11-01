@@ -26,7 +26,14 @@ Template.createWithParams({
   ConnectorExternalId: { type: 'String', description: 'The external id used to match the connector when assuming this role, do not change.' },
   ConnectorEndpoint: { type: 'String', description: 'The endpoint to send the role arn to when complete so kloud.io can assume this role, do not change.' }
 }, (aws, params) => {
-  const bucket = aws.s3Bucket({ bucketName: join('klouds-cost-reports-', params.UniqueId()) });
+  const bucket = aws.s3Bucket({ bucketName: join('klouds-cost-reports-', params.UniqueId()),
+    publicAccessBlockConfiguration: {
+      blockPublicAcls: true,
+      blockPublicPolicy: true,
+      ignorePublicAcls: true,
+      restrictPublicBuckets: true
+    }
+  });
   aws.s3BucketPolicy({
     bucket,
     policyDocument: iamPolicy({version: '2012-10-17', statement: [
@@ -66,8 +73,7 @@ Template.createWithParams({
   Iam.from(role)
     .add('CostReportPolicy', Policy.allow(['s3:ListBucket', 's3:GetObject'], bucket.attributes.Arn));
   const lambda = Lambda.create(aws, 'klouds-cost-report-generator',{
-    zipFile: fs.readFileSync('stack/generate-cost-reports.js').toString()}, 'index.handler', 'nodejs14.x' );
-  lambda.lambda.functionName = join('klouds-cost-report-generator', params.UniqueId())
+    zipFile: fs.readFileSync('stack/generate-cost-reports.js').toString()}, 'index.handler', 'nodejs14.x', {functionName: join('klouds-cost-report-generator', params.UniqueId())} );
   Iam.from(lambda.role)
   .add('CostReportPolicy', Policy.allow(['cur:PutReportDefinition', 'cur:DeleteReportDefinition'], '*'));
   const generator = aws.customResource('KloudsCostReportGenerator', {
