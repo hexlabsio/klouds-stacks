@@ -65,7 +65,7 @@ Template.createWithParams({
   });
   
   
-}, 'template/with-cost-reports.json', t => JSON.stringify(({...t, Description: 'An IAM Role to grant READONLY access to klouds.io'})));
+}, 'template/with-cost-reports.json', t => JSON.stringify({...t, Description: 'Generates Cost and Usage Reports and creates a cross-account IAM Role with READONLY access for use by klouds.io'}, null, 2));
 
 Template.createWithParams({
   RoleName: { type: 'String', default: 'klouds-view-connector' },
