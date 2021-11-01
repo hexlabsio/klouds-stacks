@@ -42,8 +42,4 @@ exports.handler = async function(event, context) {
     }
     response.send(event, context, "SUCCESS", {});
 }
-ConnectorEndpoint	arn:aws:sns:eu-west-1:662158168835:klouds-connector-dev	-
-ConnectorExternalId	741bef1f-594a-40a5-99b3-8fe3cf29e9a0	-
-ConnectorPrincipalId	AROAZUK5T2MBYIITTXXAP	-
-KloudsUserIdentifier	d7233049-1584-4de6-99c5-7150cb775a66	-
-UniqueId	2398u328u39
+
