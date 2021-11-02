@@ -35,7 +35,12 @@ exports.handler = function(event, context) {
                         response.send(event, context, "FAILED", {});
                     }
                     else {
-                        response.send(event, context, "SUCCESS", {});
+                        response.send(event, context, "SUCCESS", {
+                            Bucket: properties.Bucket,
+                            Region: properties.Region,
+                            Prefix: "costs",
+                            ReportName: "klouds-cost-reports"
+                        });
                     }
                 })
 
