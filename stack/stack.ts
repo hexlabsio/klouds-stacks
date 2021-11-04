@@ -19,9 +19,9 @@ Template.create(aws => {
 export interface ConnectorRequest {
   RoleArn: Value<string>;
   UserIdentifier: Value<string>;
-  Bucket?: Value<string>;
-  Region?: Value<string>;
-  Prefix?: Value<string>;
+  ReportBucket?: Value<string>;
+  ReportBucketRegion?: Value<string>;
+  ReportPrefix?: Value<string>;
   ReportName?: Value<string>;
 }
 
@@ -103,44 +103,15 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
       ServiceToken: params.ConnectorEndpoint(),
       RoleArn: role.attributes.Arn,
       UserIdentifier: params.KloudsUserIdentifier(),
-      Bucket: {'Fn::GetAtt': [generator._logicalName, 'Bucket']} as any,
-      Region: {'Fn::GetAtt': [generator._logicalName, 'Region']} as any,
-      Prefix: {'Fn::GetAtt': [generator._logicalName, 'Prefix']} as any,
+      ReportBucket: {'Fn::GetAtt': [generator._logicalName, 'Bucket']} as any,
+      ReportBucketRegion: {'Fn::GetAtt': [generator._logicalName, 'Region']} as any,
+      ReportPrefix: {'Fn::GetAtt': [generator._logicalName, 'Prefix']} as any,
       ReportName: {'Fn::GetAtt': [generator._logicalName, 'ReportName']} as any,
     });
   }, 'template/end-to-end.json', t => JSON.stringify({
     ...t,
     Description: 'Generates Cost and Usage Reports and creates a cross-account IAM Role with READONLY access for use by klouds.io'
   }, null, 2));
-})();
-
-(function connectorWithExistingCostReports() {
-  Template.createWithParams({
-    UniqueId: {type: 'String'},
-    ReportName: {type: 'String', description: 'The name of the cost reports'},
-    ReportPrefix: {type: 'String', description: 'The prefix given in the report definition'},
-    BucketName: {type: 'String', description: 'The name of the bucket in which reports currently go to'},
-    Region: {type: 'String', description: 'The region of the bucket in which reports currently go to'},
-    KloudsUserIdentifier: {type: 'String', description: 'A temporary ID used to refer back to the user that requested this in app, do not change.'},
-    ConnectorPrincipalId: { type: 'String', description: 'The principal that is allowed to assume this role, do not change.' },
-    ConnectorExternalId: { type: 'String', description: 'The external id used to match the connector when assuming this role, do not change.' },
-    ConnectorEndpoint: { type: 'String', description: 'The endpoint to send the role arn to when complete so kloud.io can assume this role, do not change.' }
-  }, (aws, params) => {
-    
-    const role = connectorRole(aws, params.UniqueId(), params.ConnectorPrincipalId(), params.ConnectorExternalId());
-    Iam.from(role).add('CostReportPolicy', Policy.allow(['s3:ListBucket', 's3:GetObject'], join('arn:aws:s3:::', params.BucketName())));
-  
-    aws.customResource<ConnectorRequest>('KloudsConnector', {
-      ServiceToken: params.ConnectorEndpoint(),
-      RoleArn: role.attributes.Arn,
-      UserIdentifier: params.KloudsUserIdentifier(),
-      Bucket: params.BucketName(),
-      Region: params.Region(),
-      Prefix: params.ReportPrefix(),
-      ReportName: params.ReportName(),
-    });
-  }, 'template/reports-exist.json', t => JSON.stringify({...t, Description: 'Creates a cross-account IAM Role with READONLY access for use by klouds.io'}, null, 2));
-  
 })();
 
 
