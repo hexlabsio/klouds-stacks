@@ -88,7 +88,7 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
       })
     });
     const role = connectorRole(aws, params.UniqueId(), params.ConnectorPrincipalId(), params.ConnectorExternalId());
-    Iam.from(role).add('CostReportPolicy', Policy.allow(['s3:ListBucket', 's3:GetObject'], bucket.attributes.Arn));
+    Iam.from(role).add('CostReportPolicy', Policy.allow(['s3:ListBucket', 's3:GetObject'], [bucket.attributes.Arn, join(bucket.attributes.Arn, '/*')]));
     
     const lambda = Lambda.create(aws, 'klouds-cost-report-generator', {zipFile: fs.readFileSync('stack/generate-cost-reports.js').toString()}, 'index.handler', 'nodejs14.x', {functionName: join('klouds-cost-report-generator', params.UniqueId())});
     Iam.from(lambda.role).add('CostReportPolicy', Policy.allow(['cur:PutReportDefinition', 'cur:DescribeReportDefinitions'], '*'));
@@ -163,7 +163,10 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
   }, (aws, params) => {
     
     const role = connectorRole(aws, params.UniqueId(), params.ConnectorPrincipalId(), params.ConnectorExternalId());
-    Iam.from(role).add('CostReportPolicy', Policy.allow(['s3:ListBucket', 's3:GetObject'], join('arn:aws:s3:::', params.ReportBucketName())));
+    Iam.from(role).add('CostReportPolicy', Policy.allow(['s3:ListBucket', 's3:GetObject'], [
+      join('arn:aws:s3:::', params.ReportBucketName()),
+      join('arn:aws:s3:::', params.ReportBucketName(), '/*')
+    ]));
     aws.customResource<ConnectorRequest>('KloudsConnector', {
       ServiceToken: params.ConnectorEndpoint(),
       RoleArn: role.attributes.Arn,
