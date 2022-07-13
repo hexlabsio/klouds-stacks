@@ -1,5 +1,6 @@
 const aws = require('aws-sdk');
 const response = require('cfn-response');
+const crypto = require('crypto');
 
 exports.handler = function(event, context) {
     if(event.RequestType === 'Create') {
@@ -7,13 +8,14 @@ exports.handler = function(event, context) {
             const properties = event.ResourceProperties;
             const bucket = properties.Bucket;
             const region = properties.Region;
+            const reportName = `klouds-cost-reports${crypto.randomBytes(8).toString("hex")}`
             if(!bucket || !region) {
                 console.log('Bucket or Region not provided');
                 response.send(event, context, "FAILED", {});
             } else {
                 const params = {
                     ReportDefinition: {
-                        "ReportName": "klouds-cost-reports",
+                        "ReportName": reportName,
                         "TimeUnit": "DAILY",
                         "Format": "textORcsv",
                         "Compression": "GZIP",
@@ -39,7 +41,7 @@ exports.handler = function(event, context) {
                             Bucket: properties.Bucket,
                             Region: properties.Region,
                             Prefix: "costs",
-                            ReportName: "klouds-cost-reports"
+                            ReportName: reportName
                         });
                     }
                 })
