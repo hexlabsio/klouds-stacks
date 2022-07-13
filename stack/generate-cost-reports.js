@@ -8,7 +8,7 @@ exports.handler = function(event, context) {
             const properties = event.ResourceProperties;
             const bucket = properties.Bucket;
             const region = properties.Region;
-            const reportName = `klouds-cost-reports${crypto.randomBytes(8).toString("hex")}`
+            const reportName = `klouds-cost-reports-${crypto.randomBytes(8).toString("hex")}`
             if(!bucket || !region) {
                 console.log('Bucket or Region not provided');
                 response.send(event, context, "FAILED", {});
