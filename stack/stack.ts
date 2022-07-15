@@ -24,6 +24,7 @@ export interface ConnectorRequest {
   ReportPrefix?: Value<string>;
   ReportName?: Value<string>;
   ConnectionIdentifier?: Value<string>;
+  StackId?: Value<string>;
 }
 
 function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<string>, externalId: Value<string>): Role {
@@ -108,6 +109,7 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
       ReportBucketRegion: {'Fn::GetAtt': [generator._logicalName, 'Region']} as any,
       ReportPrefix: {'Fn::GetAtt': [generator._logicalName, 'Prefix']} as any,
       ReportName: {'Fn::GetAtt': [generator._logicalName, 'ReportName']} as any,
+      StackId: {Ref: 'AWS::StackId'},
     });
   
     return {
@@ -193,6 +195,7 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
       ReportBucketRegion:  params.ReportBucketRegion(),
       ReportPrefix:  params.ReportPrefix(),
       ReportName:  params.ReportName(),
+      StackId: {Ref: 'AWS::StackId'},
     });
 
     return {
@@ -248,6 +251,7 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
       UserIdentifier: params.KloudsUserIdentifier(),
       ReportBucket: params.ReportBucket(),
       ConnectionIdentifier: params.ConnectionIdentifier(),
+      StackId: {Ref: 'AWS::StackId'},
     });
 
     return {
@@ -277,7 +281,8 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
     aws.customResource<ConnectorRequest>('KloudsConnector', {
       ServiceToken: params.ConnectorEndpoint(),
       RoleArn: role.attributes.Arn,
-      UserIdentifier: params.KloudsUserIdentifier()
+      UserIdentifier: params.KloudsUserIdentifier(),
+      StackId: {Ref: 'AWS::StackId'},
     });
   
     return {
@@ -310,6 +315,7 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
       RoleArn: role.attributes.Arn,
       UserIdentifier: params.KloudsUserIdentifier(),
       ConnectionIdentifier: params.ConnectionIdentifier(),
+      StackId: {Ref: 'AWS::StackId'},
     });
 
     return {
@@ -339,7 +345,8 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
     aws.customResource<ConnectorRequest>('KloudsConnector', {
       ServiceToken: params.ConnectorEndpoint(),
       RoleArn: role.attributes.Arn,
-      UserIdentifier: params.KloudsUserIdentifier()
+      UserIdentifier: params.KloudsUserIdentifier(),
+      StackId: {Ref: 'AWS::StackId'},
     });
     
     return {
