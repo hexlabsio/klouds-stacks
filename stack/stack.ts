@@ -238,7 +238,7 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
       description: ''
     }
   }, (aws, params) => {
-    const bucket = aws.s3Bucket({bucketName: join('klouds-cost-reports-', params.UniqueId())});
+    const bucket = aws.s3Bucket({bucketName: params.ReportBucket() });
     aws.s3BucketPolicy({
       bucket,
       policyDocument: iamPolicy({
