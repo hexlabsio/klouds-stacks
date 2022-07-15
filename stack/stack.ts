@@ -259,7 +259,7 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
       })
     });
     const role = connectorRole(aws, params.UniqueId(), params.ConnectorPrincipalId(), params.ConnectorExternalId());
-    Iam.from(role).add('CostReportPolicy', Policy.allow(['s3:ListBucket', 's3:GetObject'], [bucket.attributes.Arn, join(bucket.attributes.Arn, '/*')]));
+    Iam.from(role).add('CostReportPolicy', Policy.allow(['s3:ListBucket', 's3:GetObject'], [join('arn:aws:s3:::', params.ReportBucket()), join('arn:aws:s3:::', params.ReportBucket(), '/*')]));
 
     aws.customResource<ConnectorRequest>('KloudsConnector', {
       _dependsOn: [bucket],
