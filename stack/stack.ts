@@ -25,6 +25,7 @@ export interface ConnectorRequest {
   ReportName?: Value<string>;
   ConnectionIdentifier?: Value<string>;
   StackId?: Value<string>;
+  Region?: Value<string>;
 }
 
 function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<string>, externalId: Value<string>): Role {
@@ -110,6 +111,7 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
       ReportPrefix: {'Fn::GetAtt': [generator._logicalName, 'Prefix']} as any,
       ReportName: {'Fn::GetAtt': [generator._logicalName, 'ReportName']} as any,
       StackId: {Ref: 'AWS::StackId'},
+      Region: {Ref: 'AWS::Region'},
     });
   
     return {
@@ -196,6 +198,7 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
       ReportPrefix:  params.ReportPrefix(),
       ReportName:  params.ReportName(),
       StackId: {Ref: 'AWS::StackId'},
+      Region: {Ref: 'AWS::Region'},
     });
 
     return {
@@ -252,6 +255,7 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
       ReportBucket: params.ReportBucket(),
       ConnectionIdentifier: params.ConnectionIdentifier(),
       StackId: {Ref: 'AWS::StackId'},
+      Region: {Ref: 'AWS::Region'},
     });
 
     return {
@@ -283,6 +287,7 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
       RoleArn: role.attributes.Arn,
       UserIdentifier: params.KloudsUserIdentifier(),
       StackId: {Ref: 'AWS::StackId'},
+      Region: {Ref: 'AWS::Region'},
     });
   
     return {
@@ -316,6 +321,7 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
       UserIdentifier: params.KloudsUserIdentifier(),
       ConnectionIdentifier: params.ConnectionIdentifier(),
       StackId: {Ref: 'AWS::StackId'},
+      Region: {Ref: 'AWS::Region'},
     });
 
     return {
@@ -347,6 +353,7 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
       RoleArn: role.attributes.Arn,
       UserIdentifier: params.KloudsUserIdentifier(),
       StackId: {Ref: 'AWS::StackId'},
+      Region: {Ref: 'AWS::Region'},
     });
     
     return {
