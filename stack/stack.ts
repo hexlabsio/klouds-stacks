@@ -167,7 +167,7 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
   }, (aws, params) => {
     const bucketArn = join("arn:aws:s3:::", params.ReportBucket())
     const policy = aws.s3BucketPolicy({
-      bucket: bucketArn,
+      bucket: params.ReportBucket(),
       policyDocument: iamPolicy({
         version: '2012-10-17', statement: [
           {
