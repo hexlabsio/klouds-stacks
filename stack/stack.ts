@@ -23,7 +23,6 @@ export interface ConnectorRequest {
   ReportBucketRegion?: Value<string>;
   ReportPrefix?: Value<string>;
   ReportName?: Value<string>;
-  ConnectionIdentifier?: Value<string>;
   StackId?: Value<string>;
   Region?: Value<string>;
 }
@@ -219,10 +218,6 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
     ReportBucket: {
       type: 'String',
       description: ''
-    },
-    ConnectionIdentifier: {
-      type: 'String',
-      description: ''
     }
   }, (aws, params) => {
     const role = connectorRole(aws, params.UniqueId(), params.ConnectorPrincipalId(), params.ConnectorExternalId());
@@ -234,7 +229,6 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
       RoleArn: role.attributes.Arn,
       UserIdentifier: params.KloudsUserIdentifier(),
       ReportBucket: params.ReportBucket(),
-      ConnectionIdentifier: params.ConnectionIdentifier(),
       StackId: {Ref: 'AWS::StackId'},
       Region: {Ref: 'AWS::Region'},
     });
@@ -243,7 +237,6 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
       outputs: {
         KloudsConnectorRoleArn: {description: 'Role used by kloud.io to read resources', value: role.attributes.Arn},
         KloudsReportBucket: {description: 'The bucket where AWS will create reports', value: params.ReportBucket() },
-        KloudsConnectionIdentifier: {description: 'The related connection identifier', value: params.ConnectionIdentifier() },
       }
     }
   }, 'template/management-account-update.json', t => JSON.stringify({
@@ -288,10 +281,6 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
     ConnectorPrincipalId: { type: 'String', description: 'The principal that is allowed to assume this role, do not change.' },
     ConnectorExternalId: { type: 'String', description: 'The external id used to match the connector when assuming this role, do not change.' },
     ConnectorEndpoint: { type: 'String', description: 'The endpoint to send the role arn to when complete so kloud.io can assume this role, do not change.' },
-    ConnectionIdentifier: {
-      type: 'String',
-      description: ''
-    }
   }, (aws, params) => {
 
     const role = connectorRole(aws, params.UniqueId(), params.ConnectorPrincipalId(), params.ConnectorExternalId());
@@ -300,7 +289,6 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
       ServiceToken: params.ConnectorEndpoint(),
       RoleArn: role.attributes.Arn,
       UserIdentifier: params.KloudsUserIdentifier(),
-      ConnectionIdentifier: params.ConnectionIdentifier(),
       StackId: {Ref: 'AWS::StackId'},
       Region: {Ref: 'AWS::Region'},
     });
@@ -308,7 +296,6 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
     return {
       outputs: {
         'KloudsConnectorRoleArn': {description: 'Role used by kloud.io to read resources', value: role.attributes.Arn},
-        'KloudsConnectionIdentifier': {description: 'The related connection identifier', value: params.ConnectionIdentifier() },
       }
     }
   }, 'template/member-account-update.json', t => JSON.stringify({...t, Description: 'Creates a cross-account IAM Role with READONLY access for use by klouds.io'}, null, 2));
