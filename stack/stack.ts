@@ -92,10 +92,10 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
     });
     const role = connectorRole(aws, params.UniqueId(), params.ConnectorPrincipalId(), params.ConnectorExternalId());
     Iam.from(role).add('CostReportPolicy', Policy.allow(['s3:ListBucket', 's3:GetObject'], [bucket.attributes.Arn, join(bucket.attributes.Arn, '/*')]));
-    
+
     const lambda = Lambda.create(aws, 'klouds-cost-report-generator', {zipFile: fs.readFileSync('stack/generate-cost-reports.js').toString()}, 'index.handler', 'nodejs14.x', {functionName: join('klouds-cost-report-generator', params.UniqueId())});
     Iam.from(lambda.role).add('CostReportPolicy', Policy.allow(['cur:PutReportDefinition', 'cur:DescribeReportDefinitions'], '*'));
-    
+
     const generator = aws.customResource('KloudsCostReportGenerator', {
       ServiceToken: lambda.lambda.attributes.Arn,
       Bucket: {Ref: bucket._logicalName},
@@ -113,7 +113,7 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
       StackId: {Ref: 'AWS::StackId'},
       Region: {Ref: 'AWS::Region'},
     });
-  
+
     return {
       outputs: {
         KloudsConnectorRoleArn: {description: 'Role used by kloud.io to read resources', value: role.attributes.Arn},
@@ -165,31 +165,31 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
       description: ''
     }
   }, (aws, params) => {
-    const bucket = aws.s3Bucket({bucketName: join('klouds-cost-reports-', params.UniqueId())});
-    aws.s3BucketPolicy({
-      bucket,
+    const bucketArn = join("arn:aws:s3:::", params.ReportBucket())
+    const policy = aws.s3BucketPolicy({
+      bucket: bucketArn,
       policyDocument: iamPolicy({
         version: '2012-10-17', statement: [
           {
             effect: 'Allow',
             principal: {Service: ['billingreports.amazonaws.com']},
             action: ['s3:GetBucketAcl', 's3:GetBucketPolicy'],
-            resource: bucket.attributes.Arn
+            resource: bucketArn
           },
           {
             effect: 'Allow',
             principal: {Service: ['billingreports.amazonaws.com']},
             action: ['s3:PutObject'],
-            resource: join(bucket.attributes.Arn, '/*')
+            resource: join(bucketArn, '/*')
           }
         ]
       })
     });
     const role = connectorRole(aws, params.UniqueId(), params.ConnectorPrincipalId(), params.ConnectorExternalId());
-    Iam.from(role).add('CostReportPolicy', Policy.allow(['s3:ListBucket', 's3:GetObject'], [bucket.attributes.Arn, join(bucket.attributes.Arn, '/*')]));
+    Iam.from(role).add('CostReportPolicy', Policy.allow(['s3:ListBucket', 's3:GetObject'], [bucketArn, join(bucketArn, '/*')]));
 
     aws.customResource<ConnectorRequest>('KloudsConnector', {
-      _dependsOn: [bucket],
+      _dependsOn: [policy],
       ServiceToken: params.ConnectorEndpoint(),
       RoleArn: role.attributes.Arn,
       UserIdentifier: params.KloudsUserIdentifier(),
@@ -279,9 +279,9 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
     ConnectorExternalId: { type: 'String', description: 'The external id used to match the connector when assuming this role, do not change.' },
     ConnectorEndpoint: { type: 'String', description: 'The endpoint to send the role arn to when complete so kloud.io can assume this role, do not change.' }
   }, (aws, params) => {
-    
+
     const role = connectorRole(aws, params.UniqueId(), params.ConnectorPrincipalId(), params.ConnectorExternalId());
-    
+
     aws.customResource<ConnectorRequest>('KloudsConnector', {
       ServiceToken: params.ConnectorEndpoint(),
       RoleArn: role.attributes.Arn,
@@ -289,15 +289,15 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
       StackId: {Ref: 'AWS::StackId'},
       Region: {Ref: 'AWS::Region'},
     });
-  
+
     return {
       outputs: {
         'KloudsConnectorRoleArn': {description: 'Role used by kloud.io to read resources', value: role.attributes.Arn}
       }
     }
   }, 'template/klouds-connector.json', t => JSON.stringify({...t, Description: 'Creates a cross-account IAM Role with READONLY access for use by klouds.io'}, null, 2));
-  
-  
+
+
 })();
 
 (function memberAccountUpdate() {
@@ -342,7 +342,7 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
     ConnectorEndpoint: { type: 'String', description: 'The endpoint to send the role arn to when complete so kloud.io can assume this role, do not change.' },
     ReportBucketName: { type: 'String', description: 'The bucket where cost reports are sent' },
   }, (aws, params) => {
-    
+
     const role = connectorRole(aws, params.UniqueId(), params.ConnectorPrincipalId(), params.ConnectorExternalId());
     Iam.from(role).add('CostReportPolicy', Policy.allow(['s3:ListBucket', 's3:GetObject'], [
       join('arn:aws:s3:::', params.ReportBucketName()),
@@ -355,12 +355,12 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
       StackId: {Ref: 'AWS::StackId'},
       Region: {Ref: 'AWS::Region'},
     });
-    
+
     return {
       outputs: {
         'KloudsConnectorRoleArn': {description: 'Role used by kloud.io to read resources', value: role.attributes.Arn}
       }
     }
   }, 'template/klouds-connector-with-bucket.json', t => JSON.stringify({...t, Description: 'Creates a cross-account IAM Role with READONLY access for use by klouds.io'}, null, 2));
-  
+
 })();
