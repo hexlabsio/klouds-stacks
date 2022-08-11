@@ -166,30 +166,11 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
     }
   }, (aws, params) => {
     const bucketArn = join("arn:aws:s3:::", params.ReportBucket())
-    const policy = aws.s3BucketPolicy({
-      bucket: params.ReportBucket(),
-      policyDocument: iamPolicy({
-        version: '2012-10-17', statement: [
-          {
-            effect: 'Allow',
-            principal: {Service: ['billingreports.amazonaws.com']},
-            action: ['s3:GetBucketAcl', 's3:GetBucketPolicy'],
-            resource: bucketArn
-          },
-          {
-            effect: 'Allow',
-            principal: {Service: ['billingreports.amazonaws.com']},
-            action: ['s3:PutObject'],
-            resource: join(bucketArn, '/*')
-          }
-        ]
-      })
-    });
     const role = connectorRole(aws, params.UniqueId(), params.ConnectorPrincipalId(), params.ConnectorExternalId());
     Iam.from(role).add('CostReportPolicy', Policy.allow(['s3:ListBucket', 's3:GetObject'], [bucketArn, join(bucketArn, '/*')]));
 
     aws.customResource<ConnectorRequest>('KloudsConnector', {
-      _dependsOn: [policy],
+      _dependsOn: [role],
       ServiceToken: params.ConnectorEndpoint(),
       RoleArn: role.attributes.Arn,
       UserIdentifier: params.KloudsUserIdentifier(),
