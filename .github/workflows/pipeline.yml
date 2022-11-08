@@ -17,7 +17,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
 
       - name: Install
-        run: npm ci && npm install -g @hexlabs/kloudformation-ts
+        run: npm ci && npm install -g @hexlabs/kloudformation-ts ts-node@^10.9.1
 
       - name: Deploy Stack
         run: |
