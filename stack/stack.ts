@@ -259,8 +259,11 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
         timeUnit: 'DAILY',
         additionalSchemaElements: ["RESOURCES"]
       });
-      const lambda = Lambda.create(aws, 'klouds-stack-set-creator', {zipFile: fs.readFileSync('stack/stack-set-creator.js').toString()}, 'index.handler', 'nodejs16.x', {functionName: params.LambdaName()});
-      Iam.from(lambda.role).add('StackSetPolicy', Policy.allow(['cloudformation:*'], '*'));
+      const lambda = Lambda.create(aws, 'klouds-stack-set-creator', {zipFile: fs.readFileSync('stack/stack-set-creator.js').toString()}, 'index.handler', 'nodejs16.x', {
+        functionName: params.LambdaName(),
+        timeout: 900
+      });
+      Iam.from(lambda.role).add('StackSetPolicy', Policy.allow(['cloudformation:*', 'organizations:DescribeOrganization'], '*'));
 
       aws.customResource('KloudsStackSetGenerator', {
         ServiceToken: lambda.lambda.attributes.Arn,

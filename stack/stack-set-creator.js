@@ -9,7 +9,7 @@ async function runtime(event) {
     await cloudformation.createStackSet({
         AutoDeployment: { Enabled: true, RetainStacksOnAccountRemoval: true },
         PermissionModel: "SERVICE_MANAGED",
-        StackSetName: 'klouds-connector-' + UniqueId,
+        StackSetName: 'klouds-connector' + unique,
         TemplateURL: 'https://klouds-user-template.s3.eu-west-1.amazonaws.com/end-to-end-for-stack-set.json',
         Parameters: [
             { ParameterKey: 'UniqueId', ParameterValue: UniqueId },
@@ -44,6 +44,7 @@ exports.handler = function(event, context) {
                     console.error(e);
                     response.send(event, context, "FAILED", {});
                 })
+            response.send(event, context, "SUCCESS", {});
         } catch (e) {
             console.error(e);
             response.send(event, context, "FAILED", {});
