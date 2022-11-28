@@ -57,7 +57,8 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
 
 (function costReportsAndConnector() {
   TemplateBuilder
-      .create('template/end-to-end.json')
+      .create('end-to-end.json')
+      .outputTo('template')
       .params({
         UniqueId: {type: 'String'},
         KloudsUserIdentifier: {
@@ -118,7 +119,6 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
           additionalSchemaElements: ["RESOURCES"]
         });
         aws.customResource<ConnectorRequest>('KloudsConnector', {
-          _dependsOn: [bucket, report],
           ServiceToken: params.ConnectorEndpoint(),
           RoleArn: role.attributes.Arn,
           UserIdentifier: params.KloudsUserIdentifier(),
@@ -136,6 +136,93 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
           }
         }
       });
+})();
+
+(function costReportsAndConnectorAllAccounts() {
+  TemplateBuilder
+    .create('end-to-end-for-stack-set.json')
+    .outputTo('template')
+    .withCondition('RootAccount', { 'Fn::Equals': [{ 'Ref': 'RootAccountId' }, { 'Ref': 'AWS::AccountId' }] })
+    .withCondition('NotRootAccount', { 'Fn::Not': [{ 'Fn::Equals': [{ 'Ref': 'RootAccountId' }, { 'Ref': 'AWS::AccountId' }] }] })
+    .params({
+      UniqueId: {type: 'String'},
+      RootAccountId: { type: 'String', description: 'If this is the same as the current account then cost and usage reports will be generated' },
+      KloudsUserIdentifier: {
+        type: 'String',
+        description: 'A temporary ID used to refer back to the user that requested this in app, do not change.'
+      },
+      ConnectorPrincipalId: {
+        type: 'String',
+        description: 'The principal that is allowed to assume this role, do not change.'
+      },
+      ConnectorExternalId: {
+        type: 'String',
+        description: 'The external id used to match the connector when assuming this role, do not change.'
+      },
+      ConnectorEndpoint: {
+        type: 'String',
+        description: 'The endpoint to send the role arn to when complete so kloud.io can assume this role, do not change.'
+      }
+    })
+    .transformTemplate(t => JSON.stringify({
+      ...t,
+      Description: "Generates Cost and Usage Reports and creates a cross-account IAM Role with READONLY access for use by klouds.io"
+    }))
+    .build((aws, params, conditional) => {
+      const bucket = conditional('RootAccount', aws.s3Bucket({bucketName: join('klouds-cost-reports-', params.UniqueId())}));
+      conditional('RootAccount', aws.s3BucketPolicy({
+        bucket,
+        policyDocument: iamPolicy({
+          version: '2012-10-17', statement: [
+            {
+              effect: 'Allow',
+              principal: {Service: ['billingreports.amazonaws.com']},
+              action: ['s3:GetBucketAcl', 's3:GetBucketPolicy'],
+              resource: bucket.attributes.Arn
+            },
+            {
+              effect: 'Allow',
+              principal: {Service: ['billingreports.amazonaws.com']},
+              action: ['s3:PutObject'],
+              resource: join(bucket.attributes.Arn, '/*')
+            }
+          ]
+        })
+      }));
+      const role = conditional('RootAccount', connectorRole(aws, params.UniqueId(), params.ConnectorPrincipalId(), params.ConnectorExternalId()));
+      Iam.from(role).add('CostReportPolicy', Policy.allow(['s3:ListBucket', 's3:GetObject'], [bucket.attributes.Arn, join(bucket.attributes.Arn, '/*')]));
+      const roleWithoutBucket = conditional('NotRootAccount', connectorRole(aws, params.UniqueId(), params.ConnectorPrincipalId(), params.ConnectorExternalId()));
+      const report = conditional('RootAccount', aws.curReportDefinition({
+        compression: 'GZIP',
+        format: 'textORcsv',
+        refreshClosedReports: false,
+        reportName: `klouds-cost-reports-${crypto.randomBytes(8).toString("hex")}`,
+        reportVersioning: 'OVERWRITE_REPORT',
+        s3Bucket: bucket,
+        s3Prefix: 'costs',
+        s3Region: {Ref: 'AWS::Region'},
+        timeUnit: 'DAILY',
+        additionalSchemaElements: ["RESOURCES"]
+      }));
+      report._dependsOn = [bucket._logicalName!];
+      aws.customResource<ConnectorRequest>('KloudsConnector', {
+        ServiceToken: params.ConnectorEndpoint(),
+        RoleArn: { 'Fn::If': ['RootAccount', role.attributes.Arn, roleWithoutBucket.attributes.Arn] } as any,
+        UserIdentifier: params.KloudsUserIdentifier(),
+        ReportBucket: { 'Fn::If': ['RootAccount', {Ref: bucket._logicalName}, { Ref: 'AWS::NoValue' }] } as any,
+        ReportBucketRegion: { 'Fn::If': ['RootAccount', {Ref: 'AWS::Region'}, { Ref: 'AWS::NoValue' }] } as any,
+        ReportPrefix: { 'Fn::If': ['RootAccount', 'costs', { Ref: 'AWS::NoValue' }] } as any,
+        ReportName: { 'Fn::If': ['RootAccount', {Ref: report._logicalName}, { Ref: 'AWS::NoValue' }] } as any,
+        StackId: {Ref: 'AWS::StackId'},
+        Region: {Ref: 'AWS::Region'},
+      });
+
+      return {
+        outputs: {
+          KloudsConnectorRoleArn: {description: 'Role used by klouds.io to read resources', value: { 'Fn::If': ['RootAccount', role.attributes.Arn, roleWithoutBucket.attributes.Arn] } }
+        }
+      }
+    });
 })();
 
 (function costReportsWithReportDetails() {

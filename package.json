@@ -12,11 +12,11 @@
   },
   "author": "hexlabs",
   "devDependencies": {
-    "@hexlabs/kloudformation-ts": "^1.1.225",
+    "@hexlabs/kloudformation-ts": "^1.1.227",
     "@types/node": "^15.0.2",
     "eslint": "^6.7.2",
     "eslint-plugin-jest": "^23.1.1",
-    "typescript": "^4.2.4",
-    "ts-node": "^10.8.1"
+    "ts-node": "^10.8.1",
+    "typescript": "^4.2.4"
   }
 }
