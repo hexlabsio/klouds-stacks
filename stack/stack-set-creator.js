@@ -36,6 +36,7 @@ exports.handler = async function(event, context) {
                     OrganizationalUnitIds: [organisations.Organization.Id]
                 }
             }).promise();
+            response.send(event, context, "SUCCESS", {});
         } catch (e) {
             console.error(e);
             response.send(event, context, "FAILED", {});
