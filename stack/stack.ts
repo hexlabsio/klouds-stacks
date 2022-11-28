@@ -270,7 +270,7 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
         Region: {Ref: 'AWS::Region'},
         ReportName: {Ref: report._logicalName},
         ReportBucket: {Ref: bucket._logicalName},
-        ReportBucketArn: {Ref: bucket.attributes.Arn},
+        ReportBucketArn: bucket.attributes.Arn,
         ConnectorPrincipalId: params.ConnectorPrincipalId(),
         ConnectorEndpoint: params.ConnectorEndpoint(),
         ConnectorExternalId: params.ConnectorExternalId(),
