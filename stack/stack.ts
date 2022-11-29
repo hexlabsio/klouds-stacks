@@ -246,7 +246,7 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
       });
       const role = connectorRole(aws, params.UniqueId(), params.ConnectorPrincipalId(), params.ConnectorExternalId());
       Iam.from(role).add('CostReportPolicy', Policy.allow(['s3:ListBucket', 's3:GetObject'], [bucket.attributes.Arn, join(bucket.attributes.Arn, '/*')] as any));
-      aws.customResource<ConnectorRequest>('KloudsConnector', {
+      const notification = aws.customResource<ConnectorRequest>('KloudsConnector', {
         ServiceToken: params.ConnectorEndpoint(),
         RoleArn: role.attributes.Arn,
         UserIdentifier: params.KloudsUserIdentifier(),
@@ -258,6 +258,7 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
         Region: {Ref: 'AWS::Region'},
       });
       aws.cloudformationStackSet({
+        _dependsOn: [notification._logicalName!],
         description: 'Deploys read-only IAM Roles in each account in order to connect to klouds.io',
         autoDeployment: { enabled: true, retainStacksOnAccountRemoval: false },
         permissionModel: 'SERVICE_MANAGED',
