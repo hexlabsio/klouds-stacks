@@ -165,8 +165,8 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
       ...t,
       Description: "Generates Cost and Usage Reports and creates a cross-account IAM Role with READONLY access for use by klouds.io"
     }))
-    .build((aws, params, conditional) => {
-      const role = conditional('NotRootAccount', connectorRole(aws, params.UniqueId(), params.ConnectorPrincipalId(), params.ConnectorExternalId()));
+    .build((aws, params) => {
+      const role = connectorRole(aws, params.UniqueId(), params.ConnectorPrincipalId(), params.ConnectorExternalId());
       aws.customResource<ConnectorRequest>('KloudsConnector', {
         ServiceToken: params.ConnectorEndpoint(),
         RoleArn: role.attributes.Arn,
