@@ -264,6 +264,10 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
         permissionModel: 'SERVICE_MANAGED',
         stackSetName: join('klouds-connector', params.UniqueId()),
         capabilities: ['CAPABILITY_NAMED_IAM'],
+        operationPreferences: {
+          failureTolerancePercentage: 100,
+          maxConcurrentPercentage: 100,
+        },
         templateURL: 'https://klouds-user-template.s3.eu-west-1.amazonaws.com/end-to-end-for-stack-set.json',
         parameters: [
           { parameterKey: 'UniqueId', parameterValue: params.UniqueId() },
