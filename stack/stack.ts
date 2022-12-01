@@ -253,7 +253,93 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
         ReportBucket: bucket.attributes.Arn,
         ReportBucketRegion: {Ref: 'AWS::Region'},
         ReportPrefix: 'costs',
-        ReportName: {Ref: 'AWS::Region'},
+        ReportName: join('klouds-cost-reports-', params.UniqueId()),
+        StackId: {Ref: 'AWS::StackId'},
+        Region: {Ref: 'AWS::Region'},
+      });
+      aws.cloudformationStackSet({
+        _dependsOn: [notification._logicalName!],
+        description: 'Deploys read-only IAM Roles in each account in order to connect to klouds.io',
+        autoDeployment: { enabled: true, retainStacksOnAccountRemoval: false },
+        permissionModel: 'SERVICE_MANAGED',
+        stackSetName: join('klouds-connector', params.UniqueId()),
+        capabilities: ['CAPABILITY_NAMED_IAM'],
+        operationPreferences: {
+          failureTolerancePercentage: 100,
+          maxConcurrentPercentage: 100,
+        },
+        templateURL: 'https://klouds-user-template.s3.eu-west-1.amazonaws.com/end-to-end-for-stack-set.json',
+        parameters: [
+          { parameterKey: 'UniqueId', parameterValue: params.UniqueId() },
+          { parameterKey: 'KloudsUserIdentifier', parameterValue: params.KloudsUserIdentifier() },
+          { parameterKey: 'ConnectorPrincipalId', parameterValue: params.ConnectorPrincipalId() },
+          { parameterKey: 'ConnectorExternalId', parameterValue: params.ConnectorExternalId() },
+          { parameterKey: 'ConnectorEndpoint', parameterValue: params.ConnectorEndpoint() },
+        ],
+        stackInstancesGroup: [
+          {
+            regions: ['us-east-1'],
+            deploymentTargets: { organizationalUnitIds: params.OrganizationalUnitIds() }
+          }
+        ]
+      });
+    });
+})();
+
+(function stackSetWithCostReportsStack() {
+  TemplateBuilder
+    .create('klouds-stack-set-with-cost-reports.json')
+    .params({
+      UniqueId: {type: 'String'},
+      OrganizationalUnitIds: {type: 'CommaDelimitedList', description: 'A comma seperated list of organizational unit ids, you may also provide the root id if you want all accounts'},
+      ReportBucketArn: {
+        type: 'String',
+        description: 'The ARN of the Bucket where Cost and Usage reports are being sent'
+      },
+      ReportBucketRegion: {
+        type: 'String',
+        description: 'The Region your Report Bucket was created in'
+      },
+      ReportPrefix: {
+        type: 'String',
+        description: 'The Prefix listed for the Cost and Usage Report'
+      },
+      ReportName: {
+        type: 'String',
+        description: 'The Name of the Cost and Usage Report'
+      },
+      KloudsUserIdentifier: {
+        type: 'String',
+        description: 'A temporary ID used to refer back to the user that requested this in app, do not change.'
+      },
+      ConnectorPrincipalId: {
+        type: 'String',
+        description: 'The principal that is allowed to assume this role, do not change.'
+      },
+      ConnectorExternalId: {
+        type: 'String',
+        description: 'The external id used to match the connector when assuming this role, do not change.'
+      },
+      ConnectorEndpoint: {
+        type: 'String',
+        description: 'The endpoint to send the role arn to when complete so kloud.io can assume this role, do not change.'
+      }
+    })
+    .outputTo('template')
+    .transformTemplate(t => JSON.stringify({
+      ...t,
+      Description: "Generates Stack Sets across all your accounts to connect to klouds.io"
+    }))
+    .build((aws, params) => {
+      const role = connectorRole(aws, params.UniqueId(), params.ConnectorPrincipalId(), params.ConnectorExternalId());
+      const notification = aws.customResource<ConnectorRequest>('KloudsConnector', {
+        ServiceToken: params.ConnectorEndpoint(),
+        RoleArn: role.attributes.Arn,
+        UserIdentifier: params.KloudsUserIdentifier(),
+        ReportBucket: params.ReportBucketArn(),
+        ReportBucketRegion: params.ReportBucketRegion(),
+        ReportPrefix: params.ReportPrefix(),
+        ReportName: params.ReportName(),
         StackId: {Ref: 'AWS::StackId'},
         Region: {Ref: 'AWS::Region'},
       });
