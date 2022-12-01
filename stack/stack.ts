@@ -292,9 +292,9 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
     .params({
       UniqueId: {type: 'String'},
       OrganizationalUnitIds: {type: 'CommaDelimitedList', description: 'A comma seperated list of organizational unit ids, you may also provide the root id if you want all accounts'},
-      ReportBucketArn: {
+      ReportBucket: {
         type: 'String',
-        description: 'The ARN of the Bucket where Cost and Usage reports are being sent'
+        description: 'The Name of the Bucket where Cost and Usage reports are being sent'
       },
       ReportBucketRegion: {
         type: 'String',
@@ -331,12 +331,15 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
       Description: "Generates Stack Sets across all your accounts to connect to klouds.io"
     }))
     .build((aws, params) => {
+      const bucketArn = join("arn:aws:s3:::", params.ReportBucket());
       const role = connectorRole(aws, params.UniqueId(), params.ConnectorPrincipalId(), params.ConnectorExternalId());
+      Iam.from(role).add('CostReportPolicy', Policy.allow(['s3:ListBucket', 's3:GetObject'], [bucketArn, join(bucketArn, '/*')]));
+
       const notification = aws.customResource<ConnectorRequest>('KloudsConnector', {
         ServiceToken: params.ConnectorEndpoint(),
         RoleArn: role.attributes.Arn,
         UserIdentifier: params.KloudsUserIdentifier(),
-        ReportBucket: params.ReportBucketArn(),
+        ReportBucket: params.ReportBucket(),
         ReportBucketRegion: params.ReportBucketRegion(),
         ReportPrefix: params.ReportPrefix(),
         ReportName: params.ReportName(),
