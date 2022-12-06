@@ -15,6 +15,11 @@ TemplateBuilder.create('bucket.json').build(aws => {
   })
 });
 
+export interface ConnectionInitRequest {
+  Type: Value<string>;
+  UserIdentifier: Value<string>;
+}
+
 export interface ConnectorRequest {
   RoleArn: Value<string>;
   UserIdentifier: Value<string>;
@@ -83,7 +88,13 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
         Description: "Generates Cost and Usage Reports and creates a cross-account IAM Role with READONLY access for use by klouds.io"
       }))
       .build((aws, params) => {
+        const init = aws.customResource<ConnectionInitRequest>('KloudsConnectInit', {
+          ServiceToken: params.ConnectorEndpoint(),
+          UserIdentifier: params.KloudsUserIdentifier(),
+          Type: 'Init',
+        });
         const bucket = aws.s3Bucket({bucketName: join('klouds-cost-reports-', params.UniqueId())});
+        bucket._dependsOn = [init._logicalName!];
         aws.s3BucketPolicy({
           bucket,
           policyDocument: iamPolicy({
@@ -166,7 +177,13 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
       Description: "Generates Cost and Usage Reports and creates a cross-account IAM Role with READONLY access for use by klouds.io"
     }))
     .build((aws, params) => {
+      const init = aws.customResource<ConnectionInitRequest>('KloudsConnectInit', {
+        ServiceToken: params.ConnectorEndpoint(),
+        UserIdentifier: params.KloudsUserIdentifier(),
+        Type: 'Init',
+      });
       const role = connectorRole(aws, params.UniqueId(), params.ConnectorPrincipalId(), params.ConnectorExternalId());
+      role._dependsOn = [init._logicalName!];
       aws.customResource<ConnectorRequest>('KloudsConnector', {
         ServiceToken: params.ConnectorEndpoint(),
         RoleArn: role.attributes.Arn,
@@ -210,8 +227,14 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
       Description: "Generates Stack Sets across all your accounts to connect to klouds.io"
     }))
     .build((aws, params) => {
+      const init = aws.customResource<ConnectionInitRequest>('KloudsConnectInit', {
+        ServiceToken: params.ConnectorEndpoint(),
+        UserIdentifier: params.KloudsUserIdentifier(),
+        Type: 'Init',
+      });
       const bucket = aws.s3Bucket({bucketName: join('klouds-cost-reports-', params.UniqueId())});
       bucket._deletionPolicy = 'Retain';
+      bucket._dependsOn = [init._logicalName!];
       const bucketPolicy = aws.s3BucketPolicy({
         bucket,
         policyDocument: iamPolicy({
@@ -331,8 +354,16 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
       Description: "Generates Stack Sets across all your accounts to connect to klouds.io"
     }))
     .build((aws, params) => {
+
+      const init = aws.customResource<ConnectionInitRequest>('KloudsConnectInit', {
+        ServiceToken: params.ConnectorEndpoint(),
+        UserIdentifier: params.KloudsUserIdentifier(),
+        Type: 'Init',
+      });
+
       const bucketArn = join("arn:aws:s3:::", params.ReportBucket());
       const role = connectorRole(aws, params.UniqueId(), params.ConnectorPrincipalId(), params.ConnectorExternalId());
+      role._dependsOn = [init._logicalName!];
       Iam.from(role).add('CostReportPolicy', Policy.allow(['s3:ListBucket', 's3:GetObject'], [bucketArn, join(bucketArn, '/*')]));
 
       const notification = aws.customResource<ConnectorRequest>('KloudsConnector', {
@@ -485,7 +516,15 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
     ...t,
     Description: 'Creates a cross-account IAM Role with READONLY access for use by klouds.io'
   })).build((aws, params) => {
+
+    const init = aws.customResource<ConnectionInitRequest>('KloudsConnectInit', {
+      ServiceToken: params.ConnectorEndpoint(),
+      UserIdentifier: params.KloudsUserIdentifier(),
+      Type: 'Init',
+    });
+
     const role = connectorRole(aws, params.UniqueId(), params.ConnectorPrincipalId(), params.ConnectorExternalId());
+    role._dependsOn = [init._logicalName!];
     Iam.from(role).add('CostReportPolicy', Policy.allow(['s3:ListBucket', 's3:GetObject'], [join('arn:aws:s3:::', params.ReportBucket()), join('arn:aws:s3:::', params.ReportBucket(), '/*')]));
 
     aws.customResource<ConnectorRequest>('KloudsConnector', {
@@ -531,8 +570,14 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
     Description: 'Creates a cross-account IAM Role with READONLY access for use by klouds.io'
   }) as any).build((aws, params) => {
 
-    const role = connectorRole(aws, params.UniqueId(), params.ConnectorPrincipalId(), params.ConnectorExternalId());
+    const init = aws.customResource<ConnectionInitRequest>('KloudsConnectInit', {
+      ServiceToken: params.ConnectorEndpoint(),
+      UserIdentifier: params.KloudsUserIdentifier(),
+      Type: 'Init',
+    });
 
+    const role = connectorRole(aws, params.UniqueId(), params.ConnectorPrincipalId(), params.ConnectorExternalId());
+    role._dependsOn = [init._logicalName!];
     aws.customResource<ConnectorRequest>('KloudsConnector', {
       ServiceToken: params.ConnectorEndpoint(),
       RoleArn: role.attributes.Arn,
@@ -576,9 +621,13 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
         Description: 'Creates a cross-account IAM Role with READONLY access for use by klouds.io'
       }))
       .build((aws, params) => {
-
+        const init = aws.customResource<ConnectionInitRequest>('KloudsConnectInit', {
+          ServiceToken: params.ConnectorEndpoint(),
+          UserIdentifier: params.KloudsUserIdentifier(),
+          Type: 'Init',
+        });
         const role = connectorRole(aws, params.UniqueId(), params.ConnectorPrincipalId(), params.ConnectorExternalId());
-
+        role._dependsOn = [init._logicalName!];
         aws.customResource<ConnectorRequest>('KloudsConnector', {
           ServiceToken: params.ConnectorEndpoint(),
           RoleArn: role.attributes.Arn,
@@ -619,8 +668,13 @@ function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<str
     },
     ReportBucketName: {type: 'String', description: 'The bucket where cost reports are sent'},
   }).transformTemplate(t => JSON.stringify({ ...t, Description: 'Creates a cross-account IAM Role with READONLY access for use by klouds.io' })).build((aws, params) => {
-
+    const init = aws.customResource<ConnectionInitRequest>('KloudsConnectInit', {
+      ServiceToken: params.ConnectorEndpoint(),
+      UserIdentifier: params.KloudsUserIdentifier(),
+      Type: 'Init',
+    });
     const role = connectorRole(aws, params.UniqueId(), params.ConnectorPrincipalId(), params.ConnectorExternalId());
+    role._dependsOn = [init._logicalName!];
     Iam.from(role).add('CostReportPolicy', Policy.allow(['s3:ListBucket', 's3:GetObject'], [
       join('arn:aws:s3:::', params.ReportBucketName()),
       join('arn:aws:s3:::', params.ReportBucketName(), '/*')
