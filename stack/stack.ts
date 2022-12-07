@@ -31,6 +31,7 @@ export interface ConnectorRequest {
   ReportName?: Value<string>;
   StackId?: Value<string>;
   Region?: Value<string>;
+  Account: Value<string>;
 }
 
 function connectorRole(aws: AWS, uniqueId: Value<string>, principalId: Value<string>, externalId: Value<string>): Role {
@@ -146,6 +147,7 @@ function connectionInit(aws: AWS, endpoint: Value<string>, userIdentifier: Value
           ReportName: {Ref: report._logicalName} as any,
           StackId: {Ref: 'AWS::StackId'},
           Region: {Ref: 'AWS::Region'},
+          Account: { Ref: 'AWS::AccountId' },
         });
 
         return {
@@ -193,6 +195,7 @@ function connectionInit(aws: AWS, endpoint: Value<string>, userIdentifier: Value
         UserIdentifier: params.KloudsUserIdentifier(),
         StackId: {Ref: 'AWS::StackId'},
         Region: {Ref: 'AWS::Region'},
+        Account: { Ref: 'AWS::AccountId' },
       });
       return {
         outputs: {
@@ -278,6 +281,7 @@ function connectionInit(aws: AWS, endpoint: Value<string>, userIdentifier: Value
         ReportName: join('klouds-cost-reports-', params.UniqueId()),
         StackId: {Ref: 'AWS::StackId'},
         Region: {Ref: 'AWS::Region'},
+        Account: { Ref: 'AWS::AccountId' },
       });
       aws.cloudformationStackSet({
         _dependsOn: [notification._logicalName!],
@@ -371,6 +375,7 @@ function connectionInit(aws: AWS, endpoint: Value<string>, userIdentifier: Value
         ReportName: params.ReportName(),
         StackId: {Ref: 'AWS::StackId'},
         Region: {Ref: 'AWS::Region'},
+        Account: { Ref: 'AWS::AccountId' },
       });
       aws.cloudformationStackSet({
         _dependsOn: [notification._logicalName!],
@@ -460,6 +465,7 @@ function connectionInit(aws: AWS, endpoint: Value<string>, userIdentifier: Value
           ReportName: params.ReportName(),
           StackId: {Ref: 'AWS::StackId'},
           Region: {Ref: 'AWS::Region'},
+          Account: { Ref: 'AWS::AccountId' },
         });
 
         return {
@@ -528,6 +534,7 @@ function connectionInit(aws: AWS, endpoint: Value<string>, userIdentifier: Value
       ReportBucket: params.ReportBucket(),
       StackId: {Ref: 'AWS::StackId'},
       Region: {Ref: 'AWS::Region'},
+      Account: { Ref: 'AWS::AccountId' },
     });
 
     return {
@@ -573,6 +580,7 @@ function connectionInit(aws: AWS, endpoint: Value<string>, userIdentifier: Value
       UserIdentifier: params.KloudsUserIdentifier(),
       StackId: {Ref: 'AWS::StackId'},
       Region: {Ref: 'AWS::Region'},
+      Account: { Ref: 'AWS::AccountId' },
     });
 
     return {
@@ -619,6 +627,7 @@ function connectionInit(aws: AWS, endpoint: Value<string>, userIdentifier: Value
           UserIdentifier: params.KloudsUserIdentifier(),
           StackId: {Ref: 'AWS::StackId'},
           Region: {Ref: 'AWS::Region'},
+          Account: { Ref: 'AWS::AccountId' },
         });
 
         return {
@@ -666,6 +675,7 @@ function connectionInit(aws: AWS, endpoint: Value<string>, userIdentifier: Value
       UserIdentifier: params.KloudsUserIdentifier(),
       StackId: {Ref: 'AWS::StackId'},
       Region: {Ref: 'AWS::Region'},
+      Account: { Ref: 'AWS::AccountId' },
     });
 
     return {
